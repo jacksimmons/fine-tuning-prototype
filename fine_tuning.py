@@ -23,6 +23,7 @@ from peft import (
 )
 import torch
 from functools import partial
+from model import BNB_CONFIG, get_model
 from perf_metrics import print_vram_usage, print_summary
 from train import get_train_args, train_peft_model
 from eval_model import qualitative, quantitative
@@ -41,23 +42,9 @@ login(os.environ.get("HF_TOKEN"))
 # Load dataset
 dataset = load_dataset("neil-code/dialogsum-test")
 
-# BNB setup
-compute_dtype = getattr(torch, "float16")
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=compute_dtype,
-    bnb_4bit_use_double_quant=False
-)
-
 # Get untrained model
 model_name = "microsoft/phi-2"
-model = AutoModelForCausalLM.from_pretrained(
-    pretrained_model_name_or_path=model_name,
-    device_map={"": 0},
-    quantization_config=bnb_config,
-    trust_remote_code=True
-)
+model = get_model(model_name)
 print("Model:")
 print_vram_usage()
 
@@ -208,13 +195,7 @@ result = train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer)
 print_summary(result)
 
 # Load the fine-tuned model from disk
-base_model = AutoModelForCausalLM.from_pretrained(
-    model_name, 
-    device_map='auto',
-    quantization_config=bnb_config,
-    trust_remote_code=True,
-    use_auth_token=True
-)
+base_model = get_model(model_name)
 eval_tokenizer = AutoTokenizer.from_pretrained(
     model_name,
     add_bos_token=True,
@@ -234,7 +215,7 @@ ft_model = PeftModel.from_pretrained(
 
 # Evaluate the model
 qualitative(dataset, ft_model, SEED, gen)
-quantitative(dataset, model_name, bnb_config, ft_model, gen)
+quantitative(dataset, model_name, BNB_CONFIG, ft_model, gen)
 
 
 ## YODA TUTORIAL REFERENCE
