@@ -23,7 +23,7 @@ from peft import (
 )
 import torch
 from functools import partial
-from model import BNB_CONFIG, get_model
+from model import get_bnb_config, get_model
 from perf_metrics import print_vram_usage, print_summary
 from train import get_train_args, train_peft_model
 from eval_model import qualitative, quantitative
@@ -215,8 +215,7 @@ ft_model = PeftModel.from_pretrained(
 
 # Evaluate the model
 qualitative(dataset, ft_model, SEED, gen)
-quantitative(dataset, model_name, BNB_CONFIG, ft_model, gen)
-
+quantitative(dataset, model_name, get_bnb_config(), ft_model, gen)
 
 ## YODA TUTORIAL REFERENCE
 # model_repo = "microsoft/Phi-3-mini-4k-instruct"
