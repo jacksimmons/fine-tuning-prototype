@@ -15,6 +15,8 @@ def get_bnb_config():
     )
 
 
+# Gets the LLM, from local filesystem (if present), or downloads it
+# from HuggingFace.
 def get_model(model_name):
     return AutoModelForCausalLM.from_pretrained(
         pretrained_model_name_or_path=model_name,
