@@ -13,7 +13,7 @@ def train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer):
     peft_training_args = TrainingArguments(
         output_dir = output_dir,
         warmup_steps=1,
-        per_device_train_batch_size=8,
+        per_device_train_batch_size=1,
         auto_find_batch_size=True,
         gradient_accumulation_steps=4,
         max_steps=1000,
