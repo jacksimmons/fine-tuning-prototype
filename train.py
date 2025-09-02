@@ -13,10 +13,10 @@ def get_train_args(output_dir):
         gradient_checkpointing=True,
         gradient_accumulation_steps=4,
 
-        # Set batch size to high initially, then it keeps halving
-        # until it wouldn't cause OOM. Takes a few seconds each half.
-        per_device_train_batch_size=16,
-        auto_find_batch_size=True,
+        # Keeps halving until batch wouldn't cause OOM.
+        # Takes a few seconds each half.
+        auto_find_batch_size=False,
+        per_device_train_batch_size=1,
 
         bf16=True,
 
@@ -27,8 +27,8 @@ def get_train_args(output_dir):
         warmup_steps=1,
         max_steps=1000,
         save_steps=100,
-        save_strategy="steps",
         eval_steps=100,
+        save_strategy="steps",
         eval_strategy="steps",
         do_eval=True,
         report_to="none",
