@@ -11,7 +11,7 @@ def get_train_args(output_dir):
 
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
-        fp16=True,
+        bf16=True,
         
         warmup_steps=1,
         max_steps=100,
