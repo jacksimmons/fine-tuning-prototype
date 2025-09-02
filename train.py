@@ -9,8 +9,10 @@ def get_train_args(output_dir):
     return TrainingArguments(
         output_dir = output_dir,
 
-        per_device_train_batch_size=1,
+        gradient_checkpointing=True,
         gradient_accumulation_steps=4,
+        
+        per_device_train_batch_size=1,
         bf16=True,
         
         warmup_steps=1,
