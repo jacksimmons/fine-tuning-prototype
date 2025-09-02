@@ -11,7 +11,7 @@ def get_train_args(output_dir):
 
         gradient_checkpointing=True,
         gradient_accumulation_steps=4,
-        
+
         per_device_train_batch_size=1,
         bf16=True,
         
@@ -24,7 +24,6 @@ def get_train_args(output_dir):
         eval_steps=100,
         eval_strategy="steps",
         do_eval=True,
-        gradient_checkpointing=True,
         report_to="none",
         overwrite_output_dir = 'True',
         group_by_length=True,
