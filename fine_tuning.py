@@ -175,13 +175,15 @@ model = prepare_model_for_kbit_training(model)
 
 # Setup PEFT for fine-tuning
 config = LoraConfig(
-    r=32, #Rank
-    lora_alpha=32,
+    # The rank of the adapter, the lower the fewer parameters you'll need to train
+    r=8,
+    # Usually 2 * r
+    lora_alpha=16,
     target_modules=[
-        'q_proj',
-        'k_proj',
-        'v_proj',
-        'dense'
+        'o_proj',
+        'qkv_proj',
+        'gate_up_proj',
+        'down_proj'
     ],
     bias="none",
     lora_dropout=0.05,  # Conventional
