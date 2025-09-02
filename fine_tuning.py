@@ -43,7 +43,7 @@ login(os.environ.get("HF_TOKEN"))
 dataset = load_dataset("neil-code/dialogsum-test")
 
 # Get untrained model
-model_name = "microsoft/phi-2"
+model_name = "microsoft/Phi-3-mini-4k-instruct"
 model = get_model(model_name)
 print("Model:")
 print_vram_usage()

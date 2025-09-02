@@ -1,7 +1,5 @@
-BF16:
-168s
-9.3GB
+TF32, phi-2:
+3.62 samples/s
+8253MB VRAM
 
-TF32:
-180s
-8.2GB
+BF16, phi-3-mini-4k
