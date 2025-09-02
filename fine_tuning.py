@@ -24,7 +24,7 @@ from peft import (
 import torch
 from functools import partial
 from perf_metrics import print_vram_usage, print_summary
-from train import train_peft_model
+from train import get_train_args, train_peft_model
 from eval_model import qualitative, quantitative
 
 
@@ -222,9 +222,12 @@ eval_tokenizer = AutoTokenizer.from_pretrained(
     use_fast=False
 )
 eval_tokenizer.pad_token = eval_tokenizer.eos_token
+
+output_dir = f"./peft-dialogue-summary-training"
+peft_training_args = get_train_args(output_dir)
 ft_model = PeftModel.from_pretrained(
     base_model,
-    "./peft-dialogue-summary-training/checkpoint-1000",
+    f"{output_dir}/checkpoint-{peft_training_args.max_steps}",
     torch_dtype=torch.float16,
     is_trainable=False
 )

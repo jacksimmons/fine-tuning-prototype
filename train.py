@@ -5,12 +5,8 @@ from transformers import (
 )
 
 
-def train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer):
-    peft_model.print_trainable_parameters()
-
-    # Train PEFT adapter
-    output_dir = f"./peft-dialogue-summary-training"
-    peft_training_args = TrainingArguments(
+def get_train_args(output_dir):
+    return TrainingArguments(
         output_dir = output_dir,
 
         per_device_train_batch_size=1,
@@ -33,6 +29,15 @@ def train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer):
         overwrite_output_dir = 'True',
         group_by_length=True,
     )
+
+
+def train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer):
+    peft_model.print_trainable_parameters()
+
+    # Train PEFT adapter
+    output_dir = f"./peft-dialogue-summary-training"
+    peft_training_args = get_train_args(output_dir)
+    
     peft_model.config.use_cache = False
     peft_trainer = Trainer(
         model=peft_model,
