@@ -20,7 +20,7 @@ def get_train_args(output_dir):
 
         bf16=True,
 
-        num_train_epochs=10,
+        num_train_epochs=3,
         learning_rate=2e-4,
         optim="paged_adamw_8bit",
 
