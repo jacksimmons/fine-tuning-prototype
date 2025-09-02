@@ -15,7 +15,7 @@ def get_train_args(output_dir):
 
         # Set batch size to high initially, then it keeps halving
         # until it wouldn't cause OOM. Takes a few seconds each half.
-        per_device_train_batch_size=1,
+        per_device_train_batch_size=16,
         auto_find_batch_size=True,
 
         bf16=True,
