@@ -23,6 +23,7 @@ from peft import (
 )
 import torch
 from functools import partial
+from gpu_utilisation import print_vram_usage
 from train import train_peft_model
 from eval_model import qualitative, quantitative
 
@@ -57,6 +58,7 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     trust_remote_code=True
 )
+print_vram_usage()
 
 # Setup tokenizer
 tokenizer = AutoTokenizer.from_pretrained(
