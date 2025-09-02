@@ -12,9 +12,12 @@ def train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer):
     output_dir = f"./peft-dialogue-summary-training"
     peft_training_args = TrainingArguments(
         output_dir = output_dir,
-        warmup_steps=1,
+
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
+        fp16=True,
+        
+        warmup_steps=1,
         max_steps=100,
         learning_rate=2e-4,
         optim="paged_adamw_8bit",
