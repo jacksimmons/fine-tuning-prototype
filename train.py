@@ -14,13 +14,13 @@ def get_train_args(output_dir):
         gradient_accumulation_steps=4,
 
         # Set batch size to high initially, then it keeps halving
-        # until it wouldn't cause OOM.
+        # until it wouldn't cause OOM. Takes a few seconds each half.
+        per_device_train_batch_size=1,
         auto_find_batch_size=True,
-        per_device_train_batch_size=16,
 
         bf16=True,
 
-        num_train_epochs=3,
+        num_train_epochs=10,
         learning_rate=2e-4,
         optim="paged_adamw_8bit",
 
