@@ -6,6 +6,7 @@ from transformers import (
 import numpy as np
 import pandas as pd
 import evaluate
+from model import get_model
 
 
 DASH_LINE = '-'.join('' for x in range(100))
@@ -32,13 +33,8 @@ def qualitative(dataset, ft_model, seed, gen):
 
 # Evaluate model quantitatively (ROGUE metric)
 # Quantifies the validity of summarisations produced by models
-def quantitative(dataset, model_name, bnb_config, ft_model, gen):
-    base_model = AutoModelForCausalLM.from_pretrained(
-        model_name, 
-        device_map='auto',
-        quantization_config=bnb_config,
-        trust_remote_code=True,
-    )
+def quantitative(dataset, model_name, ft_model, gen):
+    base_model = get_model(model_name)
     dialogues = dataset['test'][0:10]['dialogue']
     human_baseline_summaries = dataset['test'][0:10]['summary']
 

@@ -51,7 +51,7 @@ print_vram_usage()
 # Setup tokenizer
 tokenizer = AutoTokenizer.from_pretrained(
     pretrained_model_name_or_path=model_name,
-    trust_remote_code=True,
+    trust_remote_code=False,
     padding_side="left",
     add_eos_token=True,
     add_bos_token=True,
@@ -62,7 +62,7 @@ tokenizer.pad_token = tokenizer.eos_token
 # Test base model with zero-shot inferencing
 eval_tokenizer = AutoTokenizer.from_pretrained(
     model_name,
-    trust_remote_code=True,
+    trust_remote_code=False,
     add_bos_token=True,
     use_fast=False
 )
@@ -199,7 +199,7 @@ base_model = get_model(model_name)
 eval_tokenizer = AutoTokenizer.from_pretrained(
     model_name,
     add_bos_token=True,
-    trust_remote_code=True,
+    trust_remote_code=False,
     use_fast=False
 )
 eval_tokenizer.pad_token = eval_tokenizer.eos_token
@@ -215,7 +215,7 @@ ft_model = PeftModel.from_pretrained(
 
 # Evaluate the model
 qualitative(dataset, ft_model, SEED, gen)
-quantitative(dataset, model_name, get_bnb_config(), ft_model, gen)
+quantitative(dataset, model_name, ft_model, gen)
 
 ## YODA TUTORIAL REFERENCE
 # model_repo = "microsoft/Phi-3-mini-4k-instruct"

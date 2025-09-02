@@ -22,5 +22,5 @@ def get_model(model_name):
         pretrained_model_name_or_path=model_name,
         device_map="auto",
         quantization_config=get_bnb_config(),
-        trust_remote_code=True
+        trust_remote_code=False
     )
