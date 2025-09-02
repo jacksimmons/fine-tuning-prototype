@@ -9,16 +9,23 @@ def get_train_args(output_dir):
     return TrainingArguments(
         output_dir = output_dir,
 
+        # Saves a lot of memory
         gradient_checkpointing=True,
         gradient_accumulation_steps=4,
 
-        per_device_train_batch_size=1,
+        # Set batch size to high initially, then it keeps halving
+        # until it wouldn't cause OOM.
+        auto_find_batch_size=True,
+        per_device_train_batch_size=16,
+
         bf16=True,
-        
-        warmup_steps=1,
-        max_steps=1000,
+
+        num_train_epochs=10,
         learning_rate=2e-4,
         optim="paged_adamw_8bit",
+
+        warmup_steps=1,
+        max_steps=1000,
         save_steps=100,
         save_strategy="steps",
         eval_steps=100,
