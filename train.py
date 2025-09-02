@@ -15,7 +15,7 @@ def train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer):
         warmup_steps=1,
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
-        max_steps=1000,
+        max_steps=100,
         learning_rate=2e-4,
         optim="paged_adamw_8bit",
         logging_steps=25,
@@ -38,4 +38,4 @@ def train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer):
         args=peft_training_args,
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
     )
-    peft_trainer.train()
+    return peft_trainer.train()

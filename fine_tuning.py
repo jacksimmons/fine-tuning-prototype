@@ -23,7 +23,7 @@ from peft import (
 )
 import torch
 from functools import partial
-from gpu_utilisation import print_vram_usage
+from perf_metrics import print_vram_usage, print_summary
 from train import train_peft_model
 from eval_model import qualitative, quantitative
 
@@ -58,6 +58,7 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     trust_remote_code=True
 )
+print("Model:")
 print_vram_usage()
 
 # Setup tokenizer
@@ -203,7 +204,8 @@ config = LoraConfig(
 # Enable gradient checkpointing to reduce mem usage
 model.gradient_checkpointing_enable()
 peft_model = get_peft_model(model, config)
-train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer)
+result = train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer)
+print_summary(result)
 
 # Load the fine-tuned model from disk
 base_model = AutoModelForCausalLM.from_pretrained(
@@ -230,6 +232,7 @@ ft_model = PeftModel.from_pretrained(
 # Evaluate the model
 qualitative(dataset, ft_model, SEED, gen)
 quantitative(dataset, model_name, bnb_config, ft_model, gen)
+
 
 ## YODA TUTORIAL REFERENCE
 # model_repo = "microsoft/Phi-3-mini-4k-instruct"
