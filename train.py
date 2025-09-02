@@ -11,10 +11,10 @@ def get_train_args(output_dir):
 
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
-        fp32=True,
+        tf32=True,
         
         warmup_steps=1,
-        max_steps=1000,
+        max_steps=100,
         learning_rate=2e-4,
         optim="paged_adamw_8bit",
         logging_steps=25,
