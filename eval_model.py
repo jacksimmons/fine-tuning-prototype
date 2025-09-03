@@ -6,7 +6,7 @@ from transformers import (
 import numpy as np
 import pandas as pd
 import evaluate
-from model import get_model
+from models import get_model
 
 
 DASH_LINE = '-'.join('' for x in range(100))
