@@ -14,7 +14,8 @@ from peft import (
 )
 import torch
 from functools import partial
-import models, tokenizers, prompt, dataset as ds, train, perf_metrics, eval_model
+from data import tokenizers
+import models, prompt, dataset as ds, train, perf_metrics, eval_model
 import testing.zero_shot
 from data.gen import gen
 
