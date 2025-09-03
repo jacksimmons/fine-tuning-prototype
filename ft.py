@@ -23,10 +23,9 @@ from peft import (
 )
 import torch
 from functools import partial
-from model import get_bnb_config, get_model
-from perf_metrics import print_vram_usage, print_summary
-from train import get_train_args, train_peft_model
-from eval_model import qualitative, quantitative
+import models, tokenizers, prompt, dataset as ds, train, perf_metrics, eval_model
+import testing.zero_shot
+from data.gen import gen
 
 
 DASH_LINE = '-'.join('' for x in range(100))
@@ -38,137 +37,25 @@ os.environ["WANDB_DISABLED"] = "true"
 
 # Login to HF
 login(os.environ.get("HF_TOKEN"))
-
 # Load dataset
-dataset = load_dataset("neil-code/dialogsum-test")
+dataset = ds.load_dataset("neil-code/dialogsum-test")
 
-# Get untrained model
+# Get base model
 model_name = "microsoft/Phi-3-mini-4k-instruct"
-model = get_model(model_name)
+model = models.get_model(model_name)
 print("Model:")
-print_vram_usage()
+perf_metrics.print_vram_usage()
 
-# Setup tokenizer
-tokenizer = AutoTokenizer.from_pretrained(
-    pretrained_model_name_or_path=model_name,
-    trust_remote_code=False,
-    padding_side="left",
-    add_eos_token=True,
-    add_bos_token=True,
-    use_fast=False
-)
-tokenizer.pad_token = tokenizer.eos_token
+tokenizer = tokenizers.get_tokenizer(model_name)
 
-# Test base model with zero-shot inferencing
-eval_tokenizer = AutoTokenizer.from_pretrained(
-    model_name,
-    trust_remote_code=False,
-    add_bos_token=True,
-    use_fast=False
-)
-eval_tokenizer.pad_token = eval_tokenizer.eos_token
-
-def gen(model, p, maxLen=100, sample=True):
-    toks = eval_tokenizer(p, return_tensors="pt")
-    res = model.generate(
-        **toks.to("cuda"),
-        max_new_tokens=maxLen,
-        do_sample=sample,
-        num_beams=1,
-        top_p=0.95
-    ).to("cpu")
-    return eval_tokenizer.batch_decode(res, skip_special_tokens=True)
-
-set_seed(SEED)
-index = 10
-prompt = dataset["test"][index]["dialogue"]
-summary = dataset["test"][index]["summary"]
-formatted_prompt = f"Instruct: Summarize the following conversation.\n{prompt}\nOutput:\n"
-res = gen(model, formatted_prompt, 100,)
-output = res[0].split("Output:\n")[1]
-
-print(DASH_LINE)
-print(f"INPUT PROMPT:\n{formatted_prompt}")
-print(DASH_LINE)
-print(f"BASELINE HUMAN SUMMARY:\n{summary}\n")
-print(DASH_LINE)
-print(f"MODEL GENERATION - ZERO SHOT:\n{output}")
-
-# Helper functions to format our input dataset for fine-tuning
-def create_prompt_formats(sample):
-    # Format fields of the sample ("instruction", "output"), concatenate them
-    # using two newlines.
-    INTRO_BLURB = "Below is an instruction describing a task. Write a response that appropriately completes the request."
-    INSTRUCTION_KEY = "### Instruct: Summarize the below conversation."
-    RESPONSE_KEY = "### Output:"
-    END_KEY = "### End"
-
-    blurb = f"\n{INTRO_BLURB}"
-    instruction = f"\n{INSTRUCTION_KEY}"
-    input_context = f"{sample["dialogue"]}" if sample["dialogue"] else None
-    response = f"{RESPONSE_KEY}\n{sample["summary"]}"
-    end = f"{END_KEY}"
-
-    parts = [blurb, instruction, input_context, response, end]
-    formatted_prompt = "\n\n".join(parts)
-    sample["text"] = formatted_prompt
-
-    return sample
-# SOURCE https://github.com/databrickslabs/dolly/blob/master/training/trainer.py
-def get_max_length(model):
-    conf = model.config
-    max_length = None
-    for length_setting in ["n_positions", "max_position_embeddings", "seq_length"]:
-        max_length = getattr(conf, length_setting, None)
-        if max_length:
-            print(f"Found max lenth: {max_length}")
-            break
-    if not max_length:
-        max_length = 1024
-        print(f"Using default max length: {max_length}")
-    return max_length
-def preprocess_batch(batch, tokenizer, max_length):
-    """
-    Tokenizing a batch
-    """
-    return tokenizer(
-        batch["text"],
-        max_length=max_length,
-        truncation=True,
-    )
-# SOURCE https://github.com/databrickslabs/dolly/blob/master/training/trainer.py
-def preprocess_dataset(tokenizer: AutoTokenizer, max_length: int, seed, dataset):
-    """
-    Format & tokenize it so it is ready for training
-    :param tokenizer (AutoTokenizer): Model Tokenizer
-    :param max_length (int): Maximum number of tokens to emit from tokenizer
-    """
-    
-    # Add prompt to each sample
-    print("Preprocessing dataset...")
-    dataset = dataset.map(create_prompt_formats)#, batched=True)
-    
-    # Apply preprocessing to each batch of the dataset & and remove 'instruction', 'context', 'response', 'category' fields
-    _preprocessing_function = partial(preprocess_batch, max_length=max_length, tokenizer=tokenizer)
-    dataset = dataset.map(
-        _preprocessing_function,
-        batched=True,
-        remove_columns=['id', 'topic', 'dialogue', 'summary'],
-    )
-
-    # Filter out samples that have input_ids exceeding max_length
-    dataset = dataset.filter(lambda sample: len(sample["input_ids"]) < max_length)
-    
-    # Shuffle dataset
-    dataset = dataset.shuffle(seed=seed)
-
-    return dataset
+# Test the base model
+testing.zero_shot.test_base_model_inference(dataset, models, model_name, SEED)
 
 # Pre-process dataset
-max_length = get_max_length(model)
+max_length = models.get_max_length(model)
 print(f"Model max length: {max_length}")
-train_dataset = preprocess_dataset(tokenizer, max_length, SEED, dataset["train"])
-eval_dataset = preprocess_dataset(tokenizer, max_length, SEED, dataset["validation"])
+train_dataset = ds.preprocess_dataset(tokenizer, max_length, SEED, dataset["train"])
+eval_dataset = ds.preprocess_dataset(tokenizer, max_length, SEED, dataset["validation"])
 
 # Prepare model for QLoRA
 model = prepare_model_for_kbit_training(model)
@@ -193,11 +80,11 @@ config = LoraConfig(
 # Enable gradient checkpointing to reduce mem usage
 model.gradient_checkpointing_enable()
 peft_model = get_peft_model(model, config)
-result = train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer)
-print_summary(result)
+result = train.train_peft_model(train_dataset, eval_dataset, peft_model, tokenizer)
+perf_metrics.print_summary(result)
 
 # Load the fine-tuned model from disk
-base_model = get_model(model_name)
+base_model = models.get_model(model_name)
 eval_tokenizer = AutoTokenizer.from_pretrained(
     model_name,
     add_bos_token=True,
@@ -207,7 +94,7 @@ eval_tokenizer = AutoTokenizer.from_pretrained(
 eval_tokenizer.pad_token = eval_tokenizer.eos_token
 
 output_dir = f"./peft-dialogue-summary-training"
-peft_training_args = get_train_args(output_dir)
+peft_training_args = train.get_train_args(output_dir)
 ft_model = PeftModel.from_pretrained(
     base_model,
     f"{output_dir}/checkpoint-{peft_training_args.max_steps}",
@@ -215,9 +102,9 @@ ft_model = PeftModel.from_pretrained(
     is_trainable=False
 )
 
-# Evaluate the model
-qualitative(dataset, ft_model, SEED, gen)
-quantitative(dataset, model_name, ft_model, gen)
+# Evaluate the model's trained performance vs untrained
+eval_model.qualitative(dataset, ft_model, SEED, gen)
+eval_model.quantitative(dataset, model_name, ft_model, gen)
 
 ## YODA TUTORIAL REFERENCE
 # model_repo = "microsoft/Phi-3-mini-4k-instruct"
