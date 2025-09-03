@@ -38,7 +38,7 @@ os.environ["WANDB_DISABLED"] = "true"
 # Login to HF
 login(os.environ.get("HF_TOKEN"))
 # Load dataset
-dataset = ds.load_dataset("neil-code/dialogsum-test")
+dataset = load_dataset("neil-code/dialogsum-test")
 
 # Get base model
 model_name = "microsoft/Phi-3-mini-4k-instruct"
