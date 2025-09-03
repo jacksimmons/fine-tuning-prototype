@@ -1,5 +1,12 @@
 TF32, phi-2:
 3.62 samples/s
 8253MB VRAM
+rouge: No more than 2% each
 
 BF16, phi-3-mini-4k
+2.72 samples/s (-)
+8255MB VRAM (=)
+rouge1: 11.93%
+rouge2: 6.80%
+rougeL: 13.02%
+rougeLsum: 12.67%
